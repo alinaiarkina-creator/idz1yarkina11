@@ -1,8 +1,6 @@
 (() => {
-  // для всіх співробітників робимо однакову кількість днів залишку відпустки
   const DEFAULT_DAYS_LEFT = 15;
 
-  // перевірка формату ОФ+число
   const isValidOF = (s) => /^[Оо][Фф]\d+$/.test((s || "").trim());
 
   const normOF = (s) => (s || "").trim().toUpperCase();
@@ -10,7 +8,6 @@
   const balanceKey = (of) => `vac_balance_${normOF(of)}`;
   const profileKey = (of) => `vac_profile_${normOF(of)}`;
 
-  // функції для роботи з датами
   const toDate = (yyyy_mm_dd) => {
     if (!yyyy_mm_dd) return null;
     const [y, m, d] = yyyy_mm_dd.split("-").map(Number);
@@ -29,10 +26,9 @@
     d.setDate(d.getDate() + n);
     return d;
   };
-//перевірка щоб дата не припадала на неділю
+
   const isSunday = (date) => date.getDay() === 0;
 
-  
   const ofInput = document.getElementById("ofInput");
   const ofError = document.getElementById("ofError");
 
@@ -59,8 +55,7 @@
   const clearHolidaysBtn = document.getElementById("clearHolidaysBtn");
   const holidaysArea = document.getElementById("holidaysArea");
 
-  
-  let lastChanged = null; 
+  let lastChanged = null;
 
   startDate.addEventListener("input", () => (lastChanged = "start"));
   durationDays.addEventListener("input", () => (lastChanged = "duration"));
@@ -124,7 +119,6 @@
     }
   };
 
-
   const parseHolidays = () => {
     const txt = holidaysArea.value.trim();
     if (!txt) return new Set();
@@ -136,7 +130,6 @@
     return set;
   };
 
-// відображення залишку на екрані
   const renderBalance = () => {
     const of = normOF(ofInput.value);
     if (!isValidOF(of)) {
@@ -194,7 +187,6 @@
     result.innerHTML = `ОФ <b>${of}</b>: залишок <b>${left}</b> днів. Введи 2 параметри — порахується 3-й.`;
   };
 
-  
   const calcDuration = (s, e, holidaySet) => {
     let cur = new Date(s);
     let count = 0;
@@ -235,7 +227,6 @@
     warn.textContent = "⚠️ " + messages.join(" ");
   };
 
-  
   const calculate = () => {
     const of = normOF(ofInput.value);
     if (!isValidOF(of)) {
@@ -320,7 +311,11 @@
         return;
       }
       const days = calcDuration(s, e, hs);
-      showWarn([]);
+
+      if (isSunday(s)) warnings.push("Дата початку — неділя.");
+      if (isSunday(e)) warnings.push("Дата завершення — неділя.");
+
+      showWarn(warnings);
       result.innerHTML =
         `Усі 3 параметри задані. Фактична тривалість (з урахуванням свят) = <b>${days}</b> днів.`;
       saveProfile(of);
@@ -343,15 +338,13 @@
     alert(`Збережено: ${of} → ${days} днів`);
   };
 
-
   ofInput.addEventListener("input", () => applyOFMode());
 
   hoursPerDay.addEventListener("input", () => renderBalance());
-
   adminSaveBtn.addEventListener("click", saveBalanceForCurrentOF);
-
   calcBtn.addEventListener("click", calculate);
 
+  
   clearBtn.addEventListener("click", () => {
     startDate.value = "";
     durationDays.value = "";
@@ -364,6 +357,7 @@
     if (isValidOF(of)) saveProfile(of);
   });
 
+  
   addHolidayBtn.addEventListener("click", () => {
     const of = normOF(ofInput.value);
     if (!isValidOF(of)) { alert("Спочатку введи коректний ОФ."); return; }
@@ -373,25 +367,22 @@
     set.add(holidayPicker.value);
     holidaysArea.value = [...set].sort().join("\n");
 
-    saveProfile(of);
-    calculate();
+    saveProfile(of); 
+    
   });
 
   clearHolidaysBtn.addEventListener("click", () => {
     const of = normOF(ofInput.value);
     if (!isValidOF(of)) { alert("Спочатку введи коректний ОФ."); return; }
     holidaysArea.value = "";
-    saveProfile(of);
-    calculate();
+    saveProfile(of); 
   });
 
-  
   [startDate, durationDays, endDate, holidaysArea].forEach(el => {
     el.addEventListener("input", () => {
       const of = normOF(ofInput.value);
       if (!isValidOF(of)) return;
       saveProfile(of);
-      calculate();
     });
   });
 
